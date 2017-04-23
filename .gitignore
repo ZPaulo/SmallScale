@@ -31,3 +31,16 @@
 # Debug files
 *.dSYM/
 *.su
+
+Matrices/
+Read libraries/
+Report/
+*.opendb
+*.csv
+*.cache
+*.tlog
+*.deps
+*.idb
+SmallScaleAssig/SmallScaleAssig.VC.VC.opendb
+*.opendb
+*.opendb
