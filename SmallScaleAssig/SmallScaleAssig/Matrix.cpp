@@ -13,7 +13,7 @@ Matrix::Matrix(char const *matrix) {
 	DEATH_MATRIX2 = "dc1";
 	this->matrix = matrix;
 	char fileName[50];
-	sprintf(fileName, "Matrices/%s/%s.mtx", matrix, matrix);
+	sprintf(fileName, "../../Matrices/%s/%s.mtx", matrix, matrix);
 
 	if ((f = fopen(fileName, "r")) == NULL)
 		exit(1);

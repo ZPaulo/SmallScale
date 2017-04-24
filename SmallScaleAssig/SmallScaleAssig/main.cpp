@@ -4,14 +4,35 @@
 #include <iostream>
 #include "SparseMatrixVector.cuh"
 #include <dirent.h>
-#include <sys/time.h>
+#include <Windows.h>
 #include <stdio.h>
 #include <string.h>
-#include "unistd.h"
 
 const int MAX_THREADS = 32;
 
 using namespace std;
+
+double PCFreq = 0.0;
+__int64 CounterStart = 0;
+
+void StartCounter()
+{
+	LARGE_INTEGER li;
+	if (!QueryPerformanceFrequency(&li))
+		cout << "QueryPerformanceFrequency failed!\n";
+
+	PCFreq = double(li.QuadPart) / 1000000000.0;
+
+	QueryPerformanceCounter(&li);
+	CounterStart = li.QuadPart;
+}
+double GetCounter()
+{
+	LARGE_INTEGER li;
+	QueryPerformanceCounter(&li);
+	return double(li.QuadPart - CounterStart) / PCFreq;
+}
+
 
 double serialMMCSR(const int *IRP, const int *JA, const double *AS, const double *x, const int M, double *result)
 {
@@ -71,16 +92,13 @@ void writeToFileOpenMP(double serialCSR, double *parallelCSR, double serialELL, 
 
 void createFileCuda() {
 
-	if (access("CUDA.csv", F_OK) == -1) {
 	FILE *file = fopen("CUDA.csv", "a");
 	fprintf(file, "Matrix,NonZeros, ,CSR,, ,ELLPACK,, ,MaxErrorCSR,MaxErrorELL\n");
 	fprintf(file, ",, ,Serial,Parallel, ,Serial,Parallel\n");
 	fclose(file);
-	}	
 }
 
 void createFileOpenMP() {
-	if (access("OpenMP.csv", F_OK) == -1) {
 	FILE *file = fopen("OpenMP.csv", "a");
 	fprintf(file, "Matrix,NonZeros, ,MaxErrorCSR,MaxErrorELL, ,serialCSR,serialEll");
 	for (int i = 0; i < MAX_THREADS; i++)
@@ -89,7 +107,6 @@ void createFileOpenMP() {
 	}
 	fprintf(file, "\n");
 	fclose(file);
-	}
 }
 
 
@@ -100,7 +117,6 @@ void computeOpenMPCalculations(char const *matrix) {
 		return;
 
 	double *x = (double *)malloc(m.N * sizeof(double));
-	srand(time(0));
 	for (int i = 0; i < m.N; i++)
 	{
 		x[i] = 100.0f * static_cast<float>(rand()) / RAND_MAX;
@@ -112,17 +128,15 @@ void computeOpenMPCalculations(char const *matrix) {
 	double ompCSRFlops[MAX_THREADS];
 	m.convertMatrixToCSR();
 
-	struct timeval t1, t2;
 	//Open mp
 	for (int threads = 1; threads <= MAX_THREADS; threads++)
 	{
 		double parallelCSRaverageOMP = 0.0;
 		for (int i = 0; i < 20; i++)
 		{
-				gettimeofday(&t1, NULL);
+			StartCounter();
 			matrixVectorCSROpenMP(m.IRP, m.JA, m.AS, x, m.M, threads, csrResultParallelOMP);
-			gettimeofday(&t2, NULL);
-			parallelCSRaverageOMP += (t2.tv_sec - t1.tv_sec) * 1000000000.0 + (t2.tv_usec - t1.tv_usec) * 1000.0;
+			parallelCSRaverageOMP += GetCounter();
 		}
 		parallelCSRaverageOMP /= 20.0;
 		ompCSRFlops[threads - 1] = (2.0 * m.nz) / (parallelCSRaverageOMP);
@@ -132,10 +146,9 @@ void computeOpenMPCalculations(char const *matrix) {
 	double serialCSRaverage = 0.0;
 	for (int i = 0; i < 20; i++)
 	{
-		gettimeofday(&t1, NULL);
+		StartCounter();
 		serialMMCSR(m.IRP, m.JA, m.AS, x, m.M, csrResultSerial);
-		gettimeofday(&t2, NULL);
-		serialCSRaverage += (t2.tv_sec - t1.tv_sec) * 1000000000.0 + (t2.tv_usec - t1.tv_usec) * 1000.0;
+		serialCSRaverage += GetCounter();
 	}
 	serialCSRaverage /= 20.0;
 
@@ -148,10 +161,9 @@ void computeOpenMPCalculations(char const *matrix) {
 		double serialELLaverage = 0.0;
 		for (int i = 0; i < 20; i++)
 		{
-			gettimeofday(&t1, NULL);
+			StartCounter();
 			serialMMELLPACK(m.maxNZ, m.JA, m.AS, x, m.M, ellResultSerial);
-			gettimeofday(&t2, NULL);
-			serialELLaverage += (t2.tv_sec - t1.tv_sec) * 1000000000.0 + (t2.tv_usec - t1.tv_usec) * 1000.0;
+			serialELLaverage += GetCounter();
 		}
 		serialELLaverage /= 20.0;
 
@@ -163,10 +175,9 @@ void computeOpenMPCalculations(char const *matrix) {
 			double parallelELLaverageOMP = 0.0;
 			for (int i = 0; i < 20; i++)
 			{
-				gettimeofday(&t1, NULL);
+				StartCounter();
 				matrixVectorELLOpenMP(m.maxNZ, m.JA, m.AS, x, m.M, threads, ellResultParallelOMP);
-				gettimeofday(&t2, NULL);
-				parallelELLaverageOMP += (t2.tv_sec - t1.tv_sec) * 1000000000.0 + (t2.tv_usec - t1.tv_usec) * 1000.0;
+				parallelELLaverageOMP += GetCounter();
 			}
 			parallelELLaverageOMP /= 20.0;
 			ompELLFlops[threads - 1] = (2.0 * m.nz) / (parallelELLaverageOMP);
@@ -221,7 +232,6 @@ void computeCUDACalculations(char const *matrix) {
 		return;
 
 	double *x = (double *)malloc(m.N * sizeof(double));
-	srand(time(0));
 	for (int i = 0; i < m.N; i++)
 	{
 		x[i] = 100.0f * static_cast<float>(rand()) / RAND_MAX;
@@ -243,10 +253,9 @@ void computeCUDACalculations(char const *matrix) {
 	double serialCSRaverage = 0.0;
 	for (int i = 0; i < 20; i++)
 	{
-			gettimeofday(&t1, NULL);
+		StartCounter();
 		serialMMCSR(m.IRP, m.JA, m.AS, x, m.M, csrResultSerial);
-		gettimeofday(&t2, NULL);
-		serialCSRaverage += (t2.tv_sec - t1.tv_sec) * 1000000000.0 + (t2.tv_usec - t1.tv_usec) * 1000.0;
+		serialCSRaverage += GetCounter();
 
 	}
 	serialCSRaverage /= 20.0;
@@ -260,10 +269,9 @@ void computeCUDACalculations(char const *matrix) {
 		double serialELLaverage = 0.0;
 		for (int i = 0; i < 20; i++)
 		{
-			gettimeofday(&t1, NULL);
+			StartCounter();
 			serialMMELLPACK(m.maxNZ, m.JA, m.AS, x, m.M, ellResultSerial);
-				gettimeofday(&t2, NULL);
-			serialELLaverage += (t2.tv_sec - t1.tv_sec) * 1000000000.0 + (t2.tv_usec - t1.tv_usec) * 1000.0;
+			serialELLaverage += GetCounter();
 		}
 		serialELLaverage /= 20.0;
 
@@ -318,7 +326,7 @@ void computeCUDACalculations(char const *matrix) {
 
 int main(int argc, char *argv[])
 {
-	bool singleMatrixText = false;
+	bool singleMatrixText = true;
 	//Create output files
 	if (argc < 1) {
 		printf("Select running mode: CUDA|OpenMP\n");
@@ -336,13 +344,13 @@ int main(int argc, char *argv[])
 	//Open files in directory
 	if (singleMatrixText)
 		if (cuda)
-			computeCUDACalculations("dc1");
+			computeCUDACalculations("cage4");
 		else
-			computeOpenMPCalculations("dc1");
+			computeOpenMPCalculations("cage4");
 	else {
 		DIR *dir;
 		struct dirent *ent;
-		if ((dir = opendir("Matrices")) != NULL) {
+		if ((dir = opendir("../../Matrices")) != NULL) {
 			/* print all the files and directories within directory */
 			int i = 0;
 			while ((ent = readdir(dir)) != NULL) {
