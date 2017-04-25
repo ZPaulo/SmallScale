@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
-const int MAX_THREADS = 32;
+const int MAX_THREADS = 8;
 
 using namespace std;
 
@@ -111,7 +111,7 @@ void createFileOpenMP() {
 
 
 void computeOpenMPCalculations(char const *matrix) {
-	
+
 	Matrix m(matrix);
 	if (m.failed)
 		return;
@@ -223,7 +223,7 @@ void computeOpenMPCalculations(char const *matrix) {
 
 
 	free(csrResultParallelOMP);
-	free(csrResultSerial);	
+	free(csrResultSerial);
 }
 
 void computeCUDACalculations(char const *matrix) {
@@ -320,8 +320,8 @@ void computeCUDACalculations(char const *matrix) {
 
 		writeToFileCUDA(serialCsrFlops, parallelCsrFlops, -1, -1, matrix, m.nz, maxDiffCSRCuda, -1);
 	}
-	
-	free(csrResultSerial);	
+
+	free(csrResultSerial);
 }
 
 int main(int argc, char *argv[])
@@ -344,7 +344,7 @@ int main(int argc, char *argv[])
 	//Open files in directory
 	if (singleMatrixText)
 		if (cuda)
-			computeCUDACalculations("cage4");
+			computeCUDACalculations("webbase-1M");
 		else
 			computeOpenMPCalculations("cage4");
 	else {
@@ -354,14 +354,17 @@ int main(int argc, char *argv[])
 			/* print all the files and directories within directory */
 			int i = 0;
 			while ((ent = readdir(dir)) != NULL) {
-				if (strcmp(ent->d_name, "ZIPs") != 0 && strcmp(ent->d_name, ".") != 0
-					&& strcmp(ent->d_name, "..") != 0) {
+				if (i >= 0 && strcmp(ent->d_name, "ZIPs") != 0 && strcmp(ent->d_name, ".") != 0
+					&& strcmp(ent->d_name, "..") != 0 && strcmp(ent->d_name, "Cube_Coup_dt0") != 0 && strcmp(ent->d_name, "FEM_3D_thermal1") != 0
+					&& strcmp(ent->d_name, "mac_econ_fwd500") != 0) {
+					cout << ent->d_name << endl;
 					if (cuda) {
 						computeCUDACalculations(ent->d_name);
 					}
 					else
 						computeOpenMPCalculations(ent->d_name);
 				}
+					i++;
 			}
 			closedir(dir);
 		}

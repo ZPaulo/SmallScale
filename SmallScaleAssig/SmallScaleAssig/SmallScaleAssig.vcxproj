@@ -158,14 +158,14 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile Include="sparseMatrixVector.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mmio.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Matrix.cpp" />
+    <ClCompile Include="mmio.c" />
     <ClCompile Include="openMP.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="OpenMP.h" />
     <ClInclude Include="mmio.h" />
+    <ClInclude Include="OpenMP.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="SparseMatrixVector.cuh" />
   </ItemGroup>

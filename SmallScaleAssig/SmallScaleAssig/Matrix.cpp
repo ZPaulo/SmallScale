@@ -241,10 +241,10 @@ void Matrix::convertMatrixToCSR()
 
 void Matrix::convertMatrixToELLPACK()
 {
-	std::string death(matrix);
+	/*std::string death(matrix);
 	if (death == DEATH_MATRIX1 || death == DEATH_MATRIX2) {
 		throw std::bad_alloc();
-	}
+	}*/
 	format = ELLPACK;
 	// To simply the calculations, the matrix was sorted by rows
 	// We now need to find the maximum number of nonzeros per row
@@ -261,7 +261,7 @@ void Matrix::convertMatrixToELLPACK()
 		}
 	}
 	max = count > max ? count : max;
-	
+	std::cout << max << std::endl;
 	//JA and AS were previously allocated in the CSR function, reallocation is needed
 
 	JA = (int *)malloc(max * M * sizeof(int));

@@ -1,0 +1,70 @@
+#!/bin/bash
+##
+## MPI submission script for PBS GRID
+## ----------------------------------
+##
+## Follow the 5 steps below to configure. If you edit this from Windows,
+## *before* submitting via "qsub" run "dos2unix" on this file - or you will
+## get strange errors. You have been warned.
+## 
+## STEP 1:
+##
+## Enter a job name after the -N on the line below:
+##
+#PBS -N smallScaleOpenMP 
+##
+## STEP 2:
+##
+## The select line below selects 1 chunk of 4 cpus 
+## Maximum values for ncpus is 32. mpiprocs must be
+## the same value as ncpus.
+##
+#PBS -l select=1:ncpus=32:mpiprocs=32
+#PBS -l place=excl
+##
+## STEP 3:
+##
+## Select correct queue:
+##
+## half_hour	-  30 minutes
+## one_hour	-   1 hour
+## half_day	-  12 hours
+## one_day	-  24 hours
+## two_day	-  48 hours
+## five_day	- 120 hours
+## ten_day	- 240 hours (by special arrangement)
+##
+#PBS -q one_hour
+##
+## STEP 4:
+##
+## Replace the hpc@cranfield.ac.uk email address
+## with your email address after the -M on the line below:
+## Your email address is NOT your username
+##
+#PBS -M jose.s.oliveira@cranfield.ac.uk
+##
+##
+##
+## DO NOT CHANGE the following lines
+##------------------------------------------------
+#PBS -W sandbox=PRIVATE
+#PBS -V
+#PBS -j oe
+#PBS -m abe 
+##
+## Change to working directory
+cd $PBS_O_WORKDIR
+##
+## Calculate number of CPUs
+cpus=`cat $PBS_NODEFILE | wc -l`
+##
+## Set up INTEL 2015 environment if needed
+# source /apps/intel/xe2015/config_intel.sh
+##
+##-------------------------------------------------
+##
+## STEP 5: 
+## Run the application
+./a.out OpenMP
+

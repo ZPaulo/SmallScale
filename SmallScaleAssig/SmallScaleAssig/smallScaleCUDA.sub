@@ -1,0 +1,67 @@
+#!/bin/bash
+##
+## MPI submission script for PBS GRID
+## ----------------------------------
+##
+## Follow the 5 steps below to configure. If you edit this from Windows,
+## *before* submitting via "qsub" run "dos2unix" on this file - or you will
+## get strange errors. You have been warned.
+## 
+## STEP 1:
+## The following line contains the job name:
+##
+#PBS -N smallScaleCUDA
+##
+## STEP 2:
+##
+## The select line below selects 1 chunk of 9 cpus
+## This strange number is needed to get the GPU;
+## will change in the future as IT support reviews the
+## queueing policies.
+##
+#PBS -l select=1:ncpus=1:mpiprocs=1:ngpus=1
+##
+## STEP 3:
+##
+## Select correct queue:
+##
+## one_hour	-   1 hour
+## half_day	-  12 hours
+## one_day	-  24 hours
+## two_day	-  48 hours
+## five_day	- 120 hours
+## ten_day	- 240 hours (by special arrangement)
+##
+#PBS -q one_hour
+##
+## STEP 4:
+##
+## Put YOUR email address in the next line:
+##
+#PBS -M jose.s.oliveira@cranfield.ac.uk
+##
+##
+##
+## DO NOT CHANGE the following lines
+##------------------------------------------------
+#PBS -W sandbox=PRIVATE
+#PBS -V
+#PBS -j oe
+#PBS -m abe 
+##
+## Change to working directory
+cd $PBS_O_WORKDIR
+##
+## Calculate number of CPUs
+cpus=`cat $PBS_NODEFILE | wc -l`
+##
+##
+##-------------------------------------------------
+##
+## STEP 5: 
+## 
+## Put correct parameters in mpirun execution line
+## below:
+##
+./a.out CUDA
+
